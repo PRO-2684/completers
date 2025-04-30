@@ -13,6 +13,12 @@ arguments = ["*rest"]
 command = ["cargo", "run", "--features=cli", "--", ["*rest"]]
 
 [[recipes]]
+names = ["example", "e"]
+description = "Compile the given \u001b[4me\u001b[24mxample"
+arguments = ["example"]
+command = ["cargo", "build", "--example", ["example"]]
+
+[[recipes]]
 names = ["test", "t"]
 description = "Run \u001b[4mt\u001b[24mests"
 arguments = ["*rest"]

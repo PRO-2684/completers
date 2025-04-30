@@ -5,23 +5,43 @@
 #![deny(missing_docs)]
 #![warn(clippy::all, clippy::nursery, clippy::pedantic, clippy::cargo)]
 
-use std::{num::ParseIntError, process::exit};
+use std::process::exit;
+
+/// Helper function for handling completion requests.
+///
+/// ## Panics
+///
+/// This function panics if the completion request is invalid or if the environment variable `COMPLETE`'s value is not recognized.
+pub fn handle_completion<F, I>(handler: F)
+where
+    F: FnOnce(Completion) -> I,
+    I: IntoIterator<Item = String>,
+{
+    // Completion::new().unwrap().map(handler).map(Completion::complete);
+    match Completion::new() {
+        Ok(Some(completion)) => {
+            let candidates = handler(completion);
+            Completion::complete(candidates);
+        }
+        Ok(None) => {
+            // No completion request, do nothing
+        }
+        Err(e) => {
+            eprintln!("Error: {e:?}");
+            exit(1);
+        }
+    }
+}
 
 /// Possible errors that can occur when parsing a completion request.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CompletionError {
     /// The completion request is missing a required field.
     MissingField,
     /// The completion request contains an invalid value for some field.
-    InvalidValue,
-    /// Unrecognized environment variable.
+    InvalidValue(String),
+    /// Unrecognized environment variable value.
     UnrecognizedEnvVar,
-}
-
-impl From<ParseIntError> for CompletionError {
-    fn from(_: ParseIntError) -> Self {
-        CompletionError::InvalidValue
-    }
 }
 
 /// A completion request from the shell. [ref](https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html).
@@ -52,12 +72,12 @@ impl Completion {
         };
         match complete.as_str() {
             "" | "0" => Ok(None),
-            "1" => Ok(Some(Self::from_args(std::env::args().collect())?)),
+            "1" => Ok(Some(Self::from_args(std::env::args().skip(1).collect())?)),
             _ => Err(CompletionError::UnrecognizedEnvVar),
         }
     }
 
-    /// Constructs a [`Completion`] object from the arguments.
+    /// Constructs a [`Completion`] object from the arguments, without the first argument (the program name).
     fn from_args(args: Vec<String>) -> Result<Self, CompletionError> {
         if args.len() < 5 {
             return Err(CompletionError::MissingField);
@@ -68,13 +88,30 @@ impl Completion {
             .map_err(|_| CompletionError::MissingField)?; // Shouldn't happen, but just in case
         let [word_index, line, cursor_index, completion_type, key] = positional;
 
-        let word_index = word_index.parse::<usize>()?;
-        let cursor_index = cursor_index.parse::<usize>()?;
-        let completion_type = completion_type
-            .parse::<u8>()?
-            .try_into()
-            .map_err(|_| CompletionError::InvalidValue)?;
-        let key = key.parse::<u8>()?.into();
+        let word_index = word_index.parse::<usize>().map_err(|e| {
+            CompletionError::InvalidValue(format!("Failed to parse word index `{word_index}`: {e}"))
+        })?;
+        let cursor_index = cursor_index.parse::<usize>().map_err(|e| {
+            CompletionError::InvalidValue(format!(
+                "Failed to parse cursor index `{cursor_index}`: {e}"
+            ))
+        })?;
+        let completion_type = completion_type.parse::<u8>().map_err(|e| {
+            CompletionError::InvalidValue(format!(
+                "Failed to parse completion type `{completion_type}`: {e}"
+            ))
+        })?;
+        let completion_type = completion_type.try_into().map_err(|_| {
+            CompletionError::InvalidValue(format!(
+                "Cannot interpret completion type {completion_type}"
+            ))
+        })?;
+        let key = key
+            .parse::<u8>()
+            .map_err(|e| {
+                CompletionError::InvalidValue(format!("Failed to parse key `{key}`: {e}"))
+            })?
+            .into();
 
         Ok(Self {
             words,
@@ -89,7 +126,7 @@ impl Completion {
     /// Answer the completion request and exit.
     pub fn complete<I>(candidates: I)
     where
-        I: Iterator<Item = String>,
+        I: IntoIterator<Item = String>,
     {
         // Print the candidates to stdout, separated by newlines
         for candidate in candidates {
@@ -164,13 +201,13 @@ mod tests {
     #[test]
     fn test_completion_from_args() {
         let args = vec![
-            "1".to_string(), // index
+            "1".to_string(),            // index
             "my_command s".to_string(), // line
-            "12".to_string(), // cursor index
-            "33".to_string(), // completion type
-            "9".to_string(), // key
-            "my_command".to_string(), // words
-            "s".to_string(), // words
+            "12".to_string(),           // cursor index
+            "33".to_string(),           // completion type
+            "9".to_string(),            // key
+            "my_command".to_string(),   // words
+            "s".to_string(),            // words
         ];
         let completion = Completion::from_args(args).unwrap();
         assert_eq!(completion.words, vec!["my_command", "s"]);
