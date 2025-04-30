@@ -1,5 +1,4 @@
 #![doc = include_str!("../README.md")]
-
 #![deny(missing_docs)]
 #![warn(clippy::all, clippy::nursery, clippy::pedantic, clippy::cargo)]
 
@@ -7,8 +6,8 @@ mod errors;
 mod types;
 
 use errors::CompletionError;
+use std::{env, path::absolute, process::exit};
 use types::CompletionType;
-use std::process::exit;
 
 /// Helper function for handling completion requests.
 ///
@@ -57,19 +56,46 @@ impl Completion {
     /// - Is not set, or set to `0` or empty, return `None`.
     /// - Is set to `1`, return a [`Completion`] object.
     /// - Is set to `bash`, generate shell code and exit successfully.
-    /// - Is set to any other value, return an error.
+    /// - Is set to any other value, return [`CompletionError::UnrecognizedEnvVar`].
     pub fn new() -> Result<Option<Self>, CompletionError> {
         // Check if the COMPLETE environment variable is set
-        let Ok(complete) = std::env::var("COMPLETE") else {
+        let Ok(complete) = env::var("COMPLETE") else {
             return Ok(None);
         };
         match complete.as_str() {
             "" | "0" => Ok(None),
-            "1" => Ok(Some(Self::from_args(std::env::args().skip(1).collect())?)),
+            "1" => Ok(Some(Self::from_args(env::args().skip(1).collect())?)),
             "bash" => {
-                let Some(name) = std::env::args().take(1).next() else {
-                    return Err(CompletionError::MissingProgramName);
-                };
+                let path = env::args()
+                    .nth(0)
+                    // We want to keep symbolic links, so we don't use `canonicalize`
+                    .map(|name| absolute(name))
+                    .unwrap_or_else(|| env::current_exe())?;
+                let name = path
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .ok_or_else(|| {
+                        CompletionError::Encoding("Failed to decode program name".to_string())
+                    })?;
+                // Error if the name is not a valid identifier for bash
+                const ALLOWED_SPECIAL_CHARS: &str = "_-";
+                let valid = name
+                    .chars()
+                    .all(|c| c.is_alphanumeric() || ALLOWED_SPECIAL_CHARS.contains(c));
+                if !valid {
+                    return Err(CompletionError::Encoding(
+                        "Program name is not a valid identifier in Bash".to_string(),
+                    ));
+                }
+
+                println!(r"_completer_{name}() {{");
+                println!(r"  local IFS=$'\n'");
+                println!(
+                    r#"  COMPREPLY=($(COMPLETE=1 ./target/debug/examples/wordlist "$COMP_CWORD" "$COMP_LINE" "$COMP_POINT" "$COMP_TYPE" "$COMP_KEY" "${{COMP_WORDS[@]}}"))"#
+                );
+                println!(r"}}");
+                println!(r"complete -F _completer_{name} {name}");
+
                 exit(0);
             }
             _ => Err(CompletionError::UnrecognizedEnvVar(complete)),

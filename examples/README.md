@@ -9,7 +9,7 @@ To run an example, you should:
     ```
 - Setup the completion:
     ```bash
-    source ./examples/<example_name>.sh
+    source <(COMPLETE=bash <example_path>)
     ```
 - Run the example:
     ```bash
