@@ -56,7 +56,10 @@ impl Completion {
     /// - Is not set, or set to `0` or empty, return `None`.
     /// - Is set to `1`, return a [`Completion`] object.
     /// - Is set to `bash`, generate shell code and exit successfully.
-    /// - Is set to any other value, return [`CompletionError::UnrecognizedEnvVar`].
+    ///
+    /// ## Errors
+    ///
+    /// If `COMPLETE` is set to any other value, return [`CompletersError::UnrecognizedEnvVar`]; If [`generate`](Completion::generate) fails, return [`ShellCodeError`].
     pub fn init() -> Result<Option<Self>, CompletersError> {
         // Check if the COMPLETE environment variable is set
         let Ok(complete) = env::var("COMPLETE") else {
@@ -75,15 +78,13 @@ impl Completion {
     }
 
     /// Constructs a [`Completion`] object from the arguments, without the first argument (the program name).
-    fn from_args(args: Vec<String>) -> Result<Self, CompletersError> {
+    fn from_args(mut args: Vec<String>) -> Result<Self, CompletersError> {
         use CompletersError::InvalidValue;
         if args.len() < 5 {
             return Err(CompletersError::MissingField);
         }
-        let (positional, words) = (args[0..5].to_vec(), args[5..].to_vec());
-        let positional: [String; 5] = positional
-            .try_into()
-            .map_err(|_| CompletersError::MissingField)?; // Shouldn't happen, but just in case
+        let words = args.split_off(5);
+        let positional: [String; 5] = args.try_into().map_err(|_| CompletersError::MissingField)?; // Shouldn't happen, but just in case
         let [word_index, line, cursor_index, completion_type, key] = positional;
 
         let word_index = word_index.parse::<usize>().map_err(|e| InvalidValue {
@@ -101,7 +102,7 @@ impl Completion {
             value: completion_type,
             what: e.to_string(),
         })?;
-        let completion_type = completion_type.try_into().map_err(|_| InvalidValue {
+        let completion_type = completion_type.try_into().map_err(|()| InvalidValue {
             field: "completion_type".to_string(),
             value: completion_type.to_string(),
             what: "Cannot interpret completion type".to_string(),
@@ -138,20 +139,19 @@ impl Completion {
     }
 
     /// Generate Bash completion code.
+    ///
+    /// ## Errors
+    ///
+    /// If the program name cannot be determined or is not a valid identifier in Bash, return [`ShellCodeError::Encoding`]. If IO error occurs, return [`ShellCodeError::IO`].
     pub fn generate() -> Result<(), ShellCodeError> {
-        let path = env::args()
-            .nth(0)
-            // We want to keep symbolic links, so we don't use `canonicalize`
-            .map(|name| absolute(name))
-            .unwrap_or_else(|| env::current_exe())?;
+        const ALLOWED_SPECIAL_CHARS: &str = "_-";
+        // We want to keep symbolic links, so we don't use `canonicalize`
+        let path = env::args().nth(0).map_or_else(env::current_exe, absolute)?;
         let name = path
             .file_name()
             .and_then(|name| name.to_str())
-            .ok_or_else(|| {
-                ShellCodeError::Encoding("Failed to decode program name".to_string())
-            })?;
+            .ok_or_else(|| ShellCodeError::Encoding("Failed to decode program name".to_string()))?;
         // Error if the name is not a valid identifier for bash
-        const ALLOWED_SPECIAL_CHARS: &str = "_-";
         let valid = name
             .chars()
             .all(|c| c.is_alphanumeric() || ALLOWED_SPECIAL_CHARS.contains(c));

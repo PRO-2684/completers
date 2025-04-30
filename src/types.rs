@@ -18,13 +18,13 @@ pub enum CompletionType {
 
 impl From<CompletionType> for u8 {
     fn from(completion_type: CompletionType) -> Self {
-        completion_type as u8
+        completion_type as Self
     }
 }
 
 impl From<CompletionType> for char {
     fn from(completion_type: CompletionType) -> Self {
-        completion_type as u8 as char
+        completion_type as u8 as Self
     }
 }
 
@@ -33,11 +33,11 @@ impl TryFrom<u8> for CompletionType {
 
     fn try_from(value: u8) -> Result<Self, ()> {
         match value {
-            b'\t' => Ok(CompletionType::Normal),
-            b'?' => Ok(CompletionType::List),
-            b'!' => Ok(CompletionType::ListAlternatives),
-            b'@' => Ok(CompletionType::ListUnmodified),
-            b'%' => Ok(CompletionType::Menu),
+            b'\t' => Ok(Self::Normal),
+            b'?' => Ok(Self::List),
+            b'!' => Ok(Self::ListAlternatives),
+            b'@' => Ok(Self::ListUnmodified),
+            b'%' => Ok(Self::Menu),
             _ => Err(()),
         }
     }
@@ -48,11 +48,11 @@ impl TryFrom<char> for CompletionType {
 
     fn try_from(value: char) -> Result<Self, ()> {
         match value as u8 {
-            b'\t' => Ok(CompletionType::Normal),
-            b'?' => Ok(CompletionType::List),
-            b'!' => Ok(CompletionType::ListAlternatives),
-            b'@' => Ok(CompletionType::ListUnmodified),
-            b'%' => Ok(CompletionType::Menu),
+            b'\t' => Ok(Self::Normal),
+            b'?' => Ok(Self::List),
+            b'!' => Ok(Self::ListAlternatives),
+            b'@' => Ok(Self::ListUnmodified),
+            b'%' => Ok(Self::Menu),
             _ => Err(()),
         }
     }

@@ -11,6 +11,7 @@ fn main() {
 }
 
 /// Handles the completion request.
+#[allow(clippy::needless_pass_by_value, reason = "Signature consistency")]
 fn handler(completion: Completion) -> Vec<String> {
     // Demo words for completion. Should contain some words with common prefixes for demo purposes.
     const WORDLIST: [&str; 7] = [
@@ -30,6 +31,6 @@ fn handler(completion: Completion) -> Vec<String> {
     WORDLIST
         .iter()
         .filter(|word| word.starts_with(&query))
-        .map(|word| word.to_string())
+        .map(|word| (*word).to_string())
         .collect()
 }
