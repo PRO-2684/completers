@@ -27,7 +27,7 @@ where
             // No completion request, do nothing
         }
         Err(e) => {
-            eprintln!("Error: {e:?}");
+            eprintln!("Error: {e}");
             exit(1);
         }
     }
@@ -39,10 +39,31 @@ pub enum CompletionError {
     /// The completion request is missing a required field.
     MissingField,
     /// The completion request contains an invalid value for some field.
-    InvalidValue(String),
+    InvalidValue {
+        /// The field that contains the invalid value.
+        field: String,
+        /// The invalid value.
+        value: String,
+        /// The error message.
+        what: String,
+    },
     /// Unrecognized environment variable value.
-    UnrecognizedEnvVar,
+    UnrecognizedEnvVar(String),
 }
+
+impl std::fmt::Display for CompletionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CompletionError::MissingField => write!(f, "Missing required field"),
+            CompletionError::InvalidValue { field, value, what } => {
+                write!(f, "Invalid value for field {field}: {value} ({what})")
+            }
+            CompletionError::UnrecognizedEnvVar(value) => write!(f, "Unrecognized environment variable value: {value}"),
+        }
+    }
+}
+
+impl std::error::Error for CompletionError {}
 
 /// A completion request from the shell. [ref](https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html).
 pub struct Completion {
@@ -73,12 +94,13 @@ impl Completion {
         match complete.as_str() {
             "" | "0" => Ok(None),
             "1" => Ok(Some(Self::from_args(std::env::args().skip(1).collect())?)),
-            _ => Err(CompletionError::UnrecognizedEnvVar),
+            _ => Err(CompletionError::UnrecognizedEnvVar(complete)),
         }
     }
 
     /// Constructs a [`Completion`] object from the arguments, without the first argument (the program name).
     fn from_args(args: Vec<String>) -> Result<Self, CompletionError> {
+        use CompletionError::InvalidValue;
         if args.len() < 5 {
             return Err(CompletionError::MissingField);
         }
@@ -88,28 +110,32 @@ impl Completion {
             .map_err(|_| CompletionError::MissingField)?; // Shouldn't happen, but just in case
         let [word_index, line, cursor_index, completion_type, key] = positional;
 
-        let word_index = word_index.parse::<usize>().map_err(|e| {
-            CompletionError::InvalidValue(format!("Failed to parse word index `{word_index}`: {e}"))
+        let word_index = word_index.parse::<usize>().map_err(|e| InvalidValue {
+            field: "word_index".to_string(),
+            value: word_index,
+            what: e.to_string(),
         })?;
-        let cursor_index = cursor_index.parse::<usize>().map_err(|e| {
-            CompletionError::InvalidValue(format!(
-                "Failed to parse cursor index `{cursor_index}`: {e}"
-            ))
+        let cursor_index = cursor_index.parse::<usize>().map_err(|e| InvalidValue {
+            field: "cursor_index".to_string(),
+            value: cursor_index,
+            what: e.to_string(),
         })?;
-        let completion_type = completion_type.parse::<u8>().map_err(|e| {
-            CompletionError::InvalidValue(format!(
-                "Failed to parse completion type `{completion_type}`: {e}"
-            ))
+        let completion_type = completion_type.parse::<u8>().map_err(|e| InvalidValue {
+            field: "completion_type".to_string(),
+            value: completion_type,
+            what: e.to_string(),
         })?;
-        let completion_type = completion_type.try_into().map_err(|_| {
-            CompletionError::InvalidValue(format!(
-                "Cannot interpret completion type {completion_type}"
-            ))
+        let completion_type = completion_type.try_into().map_err(|_| InvalidValue {
+            field: "completion_type".to_string(),
+            value: completion_type.to_string(),
+            what: "Cannot interpret completion type".to_string(),
         })?;
         let key = key
             .parse::<u8>()
-            .map_err(|e| {
-                CompletionError::InvalidValue(format!("Failed to parse key `{key}`: {e}"))
+            .map_err(|e| InvalidValue {
+                field: "key".to_string(),
+                value: key,
+                what: e.to_string(),
             })?
             .into();
 
