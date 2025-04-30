@@ -48,7 +48,44 @@ TODO
 
 ## 📖 Usage
 
-TODO
+First, define a completion handler function that takes a [`Completion`] struct as an argument and returns a vector of completion candidates:
+
+```rust
+use completers::Completion;
+
+fn handler(_completion: Completion) -> Vec<String> {
+    vec![]
+}
+```
+
+Then, call `handle_completion` BEFORE any other command that writes to stdout in your main function:
+
+```rust
+use completers::{Completion, handle_completion};
+
+fn main() {
+    // Call this before any other command
+    handle_completion(handler);
+    // Other logic
+}
+#
+# fn handler(_completion: Completion) -> Vec<String> {
+#     vec![]
+# }
+```
+
+After that, generate and evaluate the shell code via:
+
+```shell
+source <(COMPLETE=bash my_command)
+```
+
+You should be able to complete your commands now. To enable completion across all your terminal sessions, you can add the above code to `~/.local/share/bash-completion/completions` directory:
+
+```shell
+mkdir -p ~/.local/share/bash-completion/completions # Create the directory if it doesn't exist
+echo 'source <(COMPLETE=bash my_command)' > ~/.local/share/bash-completion/completions/my_command
+```
 
 ## ⚙️ Mechanism
 

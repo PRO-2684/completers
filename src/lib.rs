@@ -1,10 +1,13 @@
-//! # `completers` library crate
-//!
-//! If you are reading this, you are reading the documentation for the `completers` library crate. For the cli, kindly refer to the README file.
+#![doc = include_str!("../README.md")]
 
 #![deny(missing_docs)]
 #![warn(clippy::all, clippy::nursery, clippy::pedantic, clippy::cargo)]
 
+mod errors;
+mod types;
+
+use errors::CompletionError;
+use types::CompletionType;
 use std::process::exit;
 
 /// Helper function for handling completion requests.
@@ -17,7 +20,6 @@ where
     F: FnOnce(Completion) -> I,
     I: IntoIterator<Item = String>,
 {
-    // Completion::new().unwrap().map(handler).map(Completion::complete);
     match Completion::new() {
         Ok(Some(completion)) => {
             let candidates = handler(completion);
@@ -32,38 +34,6 @@ where
         }
     }
 }
-
-/// Possible errors that can occur when parsing a completion request.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum CompletionError {
-    /// The completion request is missing a required field.
-    MissingField,
-    /// The completion request contains an invalid value for some field.
-    InvalidValue {
-        /// The field that contains the invalid value.
-        field: String,
-        /// The invalid value.
-        value: String,
-        /// The error message.
-        what: String,
-    },
-    /// Unrecognized environment variable value.
-    UnrecognizedEnvVar(String),
-}
-
-impl std::fmt::Display for CompletionError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            CompletionError::MissingField => write!(f, "Missing required field"),
-            CompletionError::InvalidValue { field, value, what } => {
-                write!(f, "Invalid value for field {field}: {value} ({what})")
-            }
-            CompletionError::UnrecognizedEnvVar(value) => write!(f, "Unrecognized environment variable value: {value}"),
-        }
-    }
-}
-
-impl std::error::Error for CompletionError {}
 
 /// A completion request from the shell. [ref](https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html).
 pub struct Completion {
@@ -82,10 +52,12 @@ pub struct Completion {
 }
 
 impl Completion {
-    /// Construct a new [`Completion`] object from command line arguments. If `COMPLETE` environment variable:
+    /// Construct a [`Completion`] object from command line arguments and envs. If `COMPLETE` environment variable:
     ///
     /// - Is not set, or set to `0` or empty, return `None`.
     /// - Is set to `1`, return a [`Completion`] object.
+    /// - Is set to `bash`, generate shell code and exit successfully.
+    /// - Is set to any other value, return an error.
     pub fn new() -> Result<Option<Self>, CompletionError> {
         // Check if the COMPLETE environment variable is set
         let Ok(complete) = std::env::var("COMPLETE") else {
@@ -94,6 +66,12 @@ impl Completion {
         match complete.as_str() {
             "" | "0" => Ok(None),
             "1" => Ok(Some(Self::from_args(std::env::args().skip(1).collect())?)),
+            "bash" => {
+                let Some(name) = std::env::args().take(1).next() else {
+                    return Err(CompletionError::MissingProgramName);
+                };
+                exit(0);
+            }
             _ => Err(CompletionError::UnrecognizedEnvVar(complete)),
         }
     }
@@ -149,7 +127,7 @@ impl Completion {
         })
     }
 
-    /// Answer the completion request and exit.
+    /// Process the completion request and exit successfully.
     pub fn complete<I>(candidates: I)
     where
         I: IntoIterator<Item = String>,
@@ -159,64 +137,6 @@ impl Completion {
             println!("{candidate}");
         }
         exit(0);
-    }
-}
-
-/// The type of completion attempted. [ref](https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html#index-COMP_005fTYPE).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
-pub enum CompletionType {
-    /// Normal completion.
-    Normal = b'\t',
-    /// Listing completions after successive tabs.
-    List = b'?',
-    /// Listing alternatives on partial word completion.
-    ListAlternatives = b'!',
-    /// List completions if the word is not unmodified.
-    ListUnmodified = b'@',
-    /// Menu completion.
-    Menu = b'%',
-}
-
-impl From<CompletionType> for u8 {
-    fn from(completion_type: CompletionType) -> Self {
-        completion_type as u8
-    }
-}
-
-impl From<CompletionType> for char {
-    fn from(completion_type: CompletionType) -> Self {
-        completion_type as u8 as char
-    }
-}
-
-impl TryFrom<u8> for CompletionType {
-    type Error = ();
-
-    fn try_from(value: u8) -> Result<Self, ()> {
-        match value {
-            b'\t' => Ok(CompletionType::Normal),
-            b'?' => Ok(CompletionType::List),
-            b'!' => Ok(CompletionType::ListAlternatives),
-            b'@' => Ok(CompletionType::ListUnmodified),
-            b'%' => Ok(CompletionType::Menu),
-            _ => Err(()),
-        }
-    }
-}
-
-impl TryFrom<char> for CompletionType {
-    type Error = ();
-
-    fn try_from(value: char) -> Result<Self, ()> {
-        match value as u8 {
-            b'\t' => Ok(CompletionType::Normal),
-            b'?' => Ok(CompletionType::List),
-            b'!' => Ok(CompletionType::ListAlternatives),
-            b'@' => Ok(CompletionType::ListUnmodified),
-            b'%' => Ok(CompletionType::Menu),
-            _ => Err(()),
-        }
     }
 }
 
