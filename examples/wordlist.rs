@@ -4,6 +4,10 @@ use completers::{handle_completion, Completion};
 
 fn main() {
     handle_completion(handler);
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    for arg in args {
+        println!("You've ordered: {arg}");
+    }
 }
 
 /// Handles the completion request.
