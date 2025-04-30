@@ -1,6 +1,6 @@
 #![warn(clippy::all, clippy::nursery, clippy::pedantic, clippy::cargo)]
 
-use completers::{handle_completion, Completion};
+use completers::{Completion, handle_completion};
 
 fn main() {
     handle_completion(handler);

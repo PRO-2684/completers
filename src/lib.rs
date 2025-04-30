@@ -5,7 +5,7 @@
 mod errors;
 mod types;
 
-use errors::CompletionError;
+use errors::{CompletersError, ShellCodeError};
 use std::{env, path::absolute, process::exit};
 use types::CompletionType;
 
@@ -19,7 +19,7 @@ where
     F: FnOnce(Completion) -> I,
     I: IntoIterator<Item = String>,
 {
-    match Completion::new() {
+    match Completion::init() {
         Ok(Some(completion)) => {
             let candidates = handler(completion);
             Completion::complete(candidates);
@@ -57,7 +57,7 @@ impl Completion {
     /// - Is set to `1`, return a [`Completion`] object.
     /// - Is set to `bash`, generate shell code and exit successfully.
     /// - Is set to any other value, return [`CompletionError::UnrecognizedEnvVar`].
-    pub fn new() -> Result<Option<Self>, CompletionError> {
+    pub fn init() -> Result<Option<Self>, CompletersError> {
         // Check if the COMPLETE environment variable is set
         let Ok(complete) = env::var("COMPLETE") else {
             return Ok(None);
@@ -66,52 +66,24 @@ impl Completion {
             "" | "0" => Ok(None),
             "1" => Ok(Some(Self::from_args(env::args().skip(1).collect())?)),
             "bash" => {
-                let path = env::args()
-                    .nth(0)
-                    // We want to keep symbolic links, so we don't use `canonicalize`
-                    .map(|name| absolute(name))
-                    .unwrap_or_else(|| env::current_exe())?;
-                let name = path
-                    .file_name()
-                    .and_then(|name| name.to_str())
-                    .ok_or_else(|| {
-                        CompletionError::Encoding("Failed to decode program name".to_string())
-                    })?;
-                // Error if the name is not a valid identifier for bash
-                const ALLOWED_SPECIAL_CHARS: &str = "_-";
-                let valid = name
-                    .chars()
-                    .all(|c| c.is_alphanumeric() || ALLOWED_SPECIAL_CHARS.contains(c));
-                if !valid {
-                    return Err(CompletionError::Encoding(
-                        "Program name is not a valid identifier in Bash".to_string(),
-                    ));
-                }
-
-                println!(r"_completer_{name}() {{");
-                println!(r"  local IFS=$'\n'");
-                println!(
-                    r#"  COMPREPLY=($(COMPLETE=1 ./target/debug/examples/wordlist "$COMP_CWORD" "$COMP_LINE" "$COMP_POINT" "$COMP_TYPE" "$COMP_KEY" "${{COMP_WORDS[@]}}"))"#
-                );
-                println!(r"}}");
-                println!(r"complete -F _completer_{name} {name}");
+                Self::generate()?;
 
                 exit(0);
             }
-            _ => Err(CompletionError::UnrecognizedEnvVar(complete)),
+            _ => Err(CompletersError::UnrecognizedEnvVar(complete)),
         }
     }
 
     /// Constructs a [`Completion`] object from the arguments, without the first argument (the program name).
-    fn from_args(args: Vec<String>) -> Result<Self, CompletionError> {
-        use CompletionError::InvalidValue;
+    fn from_args(args: Vec<String>) -> Result<Self, CompletersError> {
+        use CompletersError::InvalidValue;
         if args.len() < 5 {
-            return Err(CompletionError::MissingField);
+            return Err(CompletersError::MissingField);
         }
         let (positional, words) = (args[0..5].to_vec(), args[5..].to_vec());
         let positional: [String; 5] = positional
             .try_into()
-            .map_err(|_| CompletionError::MissingField)?; // Shouldn't happen, but just in case
+            .map_err(|_| CompletersError::MissingField)?; // Shouldn't happen, but just in case
         let [word_index, line, cursor_index, completion_type, key] = positional;
 
         let word_index = word_index.parse::<usize>().map_err(|e| InvalidValue {
@@ -162,6 +134,41 @@ impl Completion {
         for candidate in candidates {
             println!("{candidate}");
         }
+        exit(0);
+    }
+
+    /// Generate Bash completion code.
+    pub fn generate() -> Result<(), ShellCodeError> {
+        let path = env::args()
+            .nth(0)
+            // We want to keep symbolic links, so we don't use `canonicalize`
+            .map(|name| absolute(name))
+            .unwrap_or_else(|| env::current_exe())?;
+        let name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .ok_or_else(|| {
+                ShellCodeError::Encoding("Failed to decode program name".to_string())
+            })?;
+        // Error if the name is not a valid identifier for bash
+        const ALLOWED_SPECIAL_CHARS: &str = "_-";
+        let valid = name
+            .chars()
+            .all(|c| c.is_alphanumeric() || ALLOWED_SPECIAL_CHARS.contains(c));
+        if !valid {
+            return Err(ShellCodeError::Encoding(
+                "Program name is not a valid identifier in Bash".to_string(),
+            ));
+        }
+
+        println!(r"_completer_{name}() {{");
+        println!(r"  local IFS=$'\n'");
+        println!(
+            r#"  COMPREPLY=($(COMPLETE=1 ./target/debug/examples/wordlist "$COMP_CWORD" "$COMP_LINE" "$COMP_POINT" "$COMP_TYPE" "$COMP_KEY" "${{COMP_WORDS[@]}}"))"#
+        );
+        println!(r"}}");
+        println!(r"complete -F _completer_{name} {name}");
+
         exit(0);
     }
 }

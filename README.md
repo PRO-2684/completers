@@ -28,7 +28,7 @@ A tiny Rust-native shell completion solution.
 
 ### Using [`binstall`](https://github.com/cargo-bins/cargo-binstall)
 
-```shell
+```bash
 cargo binstall completers
 ```
 
@@ -38,7 +38,7 @@ Navigate to the [Releases page](https://github.com/PRO-2684/completers/releases)
 
 ### Compiling from Source
 
-```shell
+```bash
 cargo install completers
 ```
 
@@ -47,6 +47,8 @@ cargo install completers
 TODO
 
 ## 📖 Usage
+
+### Rust Part
 
 First, define a completion handler function that takes a [`Completion`] struct as an argument and returns a vector of completion candidates:
 
@@ -58,13 +60,12 @@ fn handler(_completion: Completion) -> Vec<String> {
 }
 ```
 
-Then, call `handle_completion` BEFORE any other command that writes to stdout in your main function:
+Then, call [`handle_completion`] BEFORE any other command that writes to stdout in your main function:
 
 ```rust
 use completers::{Completion, handle_completion};
 
 fn main() {
-    // Call this before any other command
     handle_completion(handler);
     // Other logic
 }
@@ -74,18 +75,24 @@ fn main() {
 # }
 ```
 
-After that, generate and evaluate the shell code via:
+### Shell Part
 
-```shell
-source <(COMPLETE=bash my_command)
+Generate and evaluate the shell code via:
+
+```bash
+source <(COMPLETE=bash my_binary)
 ```
 
-You should be able to complete your commands now. To enable completion across all your terminal sessions, you can add the above code to `~/.local/share/bash-completion/completions` directory:
+You should be able to complete your commands now. To enable completion across all your terminal sessions, you can add the above code to your completions directory, like:
 
-```shell
+```bash
 mkdir -p ~/.local/share/bash-completion/completions # Create the directory if it doesn't exist
-echo 'source <(COMPLETE=bash my_command)' > ~/.local/share/bash-completion/completions/my_command
+echo 'source <(COMPLETE=bash my_binary)' > ~/.local/share/bash-completion/completions/my_binary
 ```
+
+### The `completers` Binary
+
+Currently, the `completers` binary does nothing.
 
 ## ⚙️ Mechanism
 
@@ -94,19 +101,19 @@ echo 'source <(COMPLETE=bash my_command)' > ~/.local/share/bash-completion/compl
 In Bash, you can designate a shell function as the completion provider using the `complete` command:
 
 ```bash
-complete -F _my_completion_function my_command
+complete -F _my_completion_function my_binary
 ```
 
 Or you can designate a command using the `-C` option:
 
 ```bash
-complete -C _my_completion_command my_command
+complete -C _my_completion_command my_binary
 ```
 
 Then, when the user types:
 
 ```bash
-my_command <TAB>
+my_binary <TAB>
 ```
 
 Bash will call the completion provider with [relevant variables set](https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html#:~:text=When%20the%20command%20or%20function%20is%20invoked%2C%20the%20COMP_LINE%2C%20COMP_POINT%2C%20COMP_KEY%2C%20and%20COMP_TYPE%20variables%20are%20assigned%20values%20as%20described%20above%20(see%20Bash%20Variables).%20If%20a%20shell%20function%20is%20being%20invoked%2C%20the%20COMP_WORDS%20and%20COMP_CWORD%20variables%20are%20also%20set), including:
@@ -127,14 +134,14 @@ Consider the following code snippet:
 ```bash
 _my_completion_function() {
     local IFS=$'\n'
-    COMPREPLY=($(COMPLETE=1 my_command "$COMP_CWORD" "$COMP_LINE" "$COMP_POINT" "$COMP_TYPE" "$COMP_KEY" "${COMP_WORDS[@]}"))
+    COMPREPLY=($(COMPLETE=1 my_binary "$COMP_CWORD" "$COMP_LINE" "$COMP_POINT" "$COMP_TYPE" "$COMP_KEY" "${COMP_WORDS[@]}"))
 }
-complete -F _my_completion_function my_command
+complete -F _my_completion_function my_binary
 ```
 
-When the user types `my_command <TAB>`, Bash will call `_my_completion_function` with the relevant variables set. The function will then spread these values as command line arguments to `my_command` with `COMPLETE` environment variable set. `my_command`, on seeing the `COMPLETE` environment variable, will parse the arguments, determine completion candidates, and print them line by line to `stdout`. After receiving the output, `_my_completion_function` will then split the output line by line and set the completion candidates using `COMPREPLY` variable.
+When the user types `my_binary <TAB>`, Bash will call `_my_completion_function` with the relevant variables set. The function will then spread these values as command line arguments to `my_binary` with `COMPLETE` environment variable set. `my_binary`, on seeing the `COMPLETE` environment variable, will parse the arguments, determine completion candidates, and print them line by line to `stdout`. After receiving the output, `_my_completion_function` will then split the output line by line and set the completion candidates using `COMPREPLY` variable.
 
-Note that the candidates are determined by `my_command` itself, not by a separate shell function. This allows for so-called Rust-native completion.
+Note that the candidates are determined by `my_binary` itself, not by a separate shell function. This allows for so-called Rust-native completion.
 
 ## 🎉 Credits
 
