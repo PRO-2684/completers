@@ -8,6 +8,7 @@
 use std::{num::ParseIntError, process::exit};
 
 /// Possible errors that can occur when parsing a completion request.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CompletionError {
     /// The completion request is missing a required field.
     MissingField,
@@ -153,5 +154,30 @@ impl TryFrom<char> for CompletionType {
             b'%' => Ok(CompletionType::Menu),
             _ => Err(()),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_completion_from_args() {
+        let args = vec![
+            "1".to_string(), // index
+            "my_command s".to_string(), // line
+            "12".to_string(), // cursor index
+            "33".to_string(), // completion type
+            "9".to_string(), // key
+            "my_command".to_string(), // words
+            "s".to_string(), // words
+        ];
+        let completion = Completion::from_args(args).unwrap();
+        assert_eq!(completion.words, vec!["my_command", "s"]);
+        assert_eq!(completion.word_index, 1);
+        assert_eq!(completion.line, "my_command s");
+        assert_eq!(completion.cursor_index, 12);
+        assert_eq!(completion.completion_type, CompletionType::ListAlternatives);
+        assert_eq!(completion.key, '\t');
     }
 }
