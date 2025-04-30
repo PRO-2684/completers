@@ -1,4 +1,4 @@
-description = "\u001b[1;36mcompleters\u001b[22;39m: Rust-native shell completion."
+description = "\u001b[1;36mcompleters\u001b[22;39m: A tiny Rust-native shell completion solution."
 
 [[recipes]]
 names = ["build", "b"]
