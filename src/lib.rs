@@ -166,13 +166,7 @@ impl Completion {
         }
 
         // Generate the completion code
-        Ok(format!(
-            r#"_completer_{name}() {{
-    local IFS=$'\n'
-    COMPREPLY=($(COMPLETE=1 {path} "$COMP_CWORD" "$COMP_LINE" "$COMP_POINT" "$COMP_TYPE" "$COMP_KEY" "${{COMP_WORDS[@]}}"))
-}}
-complete -F _completer_{name} {name}"#,
-        ))
+        Ok(format!(include_str!("../templates/bash.tmpl"), name = name, path = path))
     }
 }
 
