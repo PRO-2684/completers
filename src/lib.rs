@@ -161,10 +161,13 @@ impl Completion {
             ));
         }
 
+        let path = path
+            .to_str()
+            .ok_or_else(|| ShellCodeError::Encoding("Failed to decode program path".to_string()))?;
         println!(r"_completer_{name}() {{");
         println!(r"  local IFS=$'\n'");
         println!(
-            r#"  COMPREPLY=($(COMPLETE=1 ./target/debug/examples/wordlist "$COMP_CWORD" "$COMP_LINE" "$COMP_POINT" "$COMP_TYPE" "$COMP_KEY" "${{COMP_WORDS[@]}}"))"#
+            r#"  COMPREPLY=($(COMPLETE=1 {path} "$COMP_CWORD" "$COMP_LINE" "$COMP_POINT" "$COMP_TYPE" "$COMP_KEY" "${{COMP_WORDS[@]}}"))"#
         );
         println!(r"}}");
         println!(r"complete -F _completer_{name} {name}");
