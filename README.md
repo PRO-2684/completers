@@ -146,6 +146,7 @@ Note that the candidates are determined by `my_binary` itself, not by a separate
 ## 🎉 Credits
 
 - [`clap`](https://github.com/clap-rs/clap), whose code and API is used as a reference. When `clap`'s [Rust-Native Completion Engine](https://github.com/clap-rs/clap/issues/3166) is stablized, this crate will be deprecated in favor of it.
+- [`complete-alias`](https://github.com/cykerway/complete-alias), whose shell code helped a lot.
 
 ## ✅ TODO
 
