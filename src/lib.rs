@@ -16,14 +16,13 @@ use types::CompletionType;
 /// This function panics if the completion request is invalid or if the environment variable `COMPLETE`'s value is not recognized.
 pub fn handle_completion<F, I>(handler: F)
 where
-    F: FnOnce(Completion) -> I,
+    F: FnOnce(Completion) -> Response<I>,
     I: IntoIterator,
     I::Item: Display,
 {
     match Completion::init() {
         Ok(Some(completion)) => {
-            let candidates = handler(completion);
-            Completion::complete(candidates);
+            Completion::complete(handler(completion));
         }
         Ok(None) => {
             // No completion request, do nothing
@@ -127,15 +126,20 @@ impl Completion {
         })
     }
 
-    /// Process the completion request and exit successfully.
-    pub fn complete<I>(candidates: I)
+    /// Answer the completion request and exit successfully.
+    pub fn complete<I>(response: Response<I>)
     where
         I: IntoIterator,
         I::Item: Display,
     {
-        // Print the candidates to stdout, separated by newlines
-        for candidate in candidates {
-            println!("{candidate}");
+        match response {
+            Response::Candidates(candidates) => {
+                println!("CANDIDATES");
+                // Print the candidates to stdout, separated by newlines
+                for candidate in candidates {
+                    println!("{candidate}");
+                }
+            },
         }
         exit(0);
     }
@@ -174,6 +178,24 @@ impl Completion {
             path = path
         ))
     }
+}
+
+/// Possible completion responses for the shell.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Response<I>
+where
+    I: IntoIterator,
+    I::Item: Display,
+{
+    /// List of candidates.
+    ///
+    /// ## Note
+    ///
+    /// Note that candidates:
+    ///
+    /// - Should NOT contain `\n`, otherwise it'll be treated as multiple candidates.
+    /// - Should NOT contain whitespaces, otherwise when it's completed, it'll be treated as multiple arguments.
+    Candidates(I),
 }
 
 /// Checks if the string is safe in Bash.

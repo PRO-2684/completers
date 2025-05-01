@@ -1,6 +1,6 @@
 #![warn(clippy::all, clippy::nursery, clippy::pedantic, clippy::cargo)]
 
-use completers::{Completion, handle_completion};
+use completers::{Completion, Response, handle_completion};
 
 fn main() {
     handle_completion(handler);
@@ -12,13 +12,13 @@ fn main() {
 
 /// Handles the completion request.
 #[allow(clippy::needless_pass_by_value, reason = "Signature consistency")]
-fn handler(completion: Completion) -> Vec<String> {
+fn handler(completion: Completion) -> Response<Vec<String>> {
     // Demo words for completion. Should contain some words with common prefixes for demo purposes.
     const MAPPING: [&str; 10] = [
         "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
     ];
     let Some(query) = completion.words.get(completion.word_index) else {
-        return vec![];
+        return Response::Candidates(vec![]);
     };
     let query = query.to_lowercase();
     // Filter the words based on the query
@@ -33,5 +33,5 @@ fn handler(completion: Completion) -> Vec<String> {
             candidates.push(word.to_string());
         }
     }
-    candidates
+    Response::Candidates(candidates)
 }

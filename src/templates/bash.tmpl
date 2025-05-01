@@ -1,5 +1,21 @@
 _completer_{name}() {{
     local IFS=$'\n'
-    COMPREPLY=($(COMPLETE=1 {path} "$COMP_CWORD" "$COMP_LINE" "$COMP_POINT" "$COMP_TYPE" "$COMP_KEY" "${{COMP_WORDS[@]}}"))
+    local response=($(COMPLETE=1 {path} "$COMP_CWORD" "$COMP_LINE" "$COMP_POINT" "$COMP_TYPE" "$COMP_KEY" "${{COMP_WORDS[@]}}"))
+    # Take out the first element of the response as the type
+    local response_type="${{response[0]}}"
+    # Remove the first element from the response
+    unset response[0]
+
+    # Match against the response type
+    case "$response_type" in
+        "CANDIDATES")
+            # A list of candidates
+            COMPREPLY=("${{response[@]}}")
+            ;;
+        *)
+            # Unrecognized response type
+            COMPREPLY=()
+            ;;
+    esac
 }}
 complete -F _completer_{name} {name}

@@ -50,30 +50,32 @@ TODO
 
 ### Rust Part
 
-First, define a completion handler function that takes a [`Completion`] struct as an argument and returns a vector of completion candidates:
+First, define a completion handler function that takes a [`Completion`] struct as an argument and returns a [`Response`]:
 
 ```rust
-use completers::Completion;
+use completers::{Completion, Response};
 
-fn handler(_completion: Completion) -> Vec<String> {
-    vec![]
+fn handler(_completion: Completion) -> Response<Vec<String>> {
+    Response::Candidates(vec![])
 }
 ```
 
 Then, call [`handle_completion`] BEFORE any other command that writes to stdout in your main function:
 
 ```rust
-use completers::{Completion, handle_completion};
+use completers::{Completion, Response, handle_completion};
 
 fn main() {
     handle_completion(handler);
     // Other logic
 }
 #
-# fn handler(_completion: Completion) -> Vec<String> {
-#     vec![]
+# fn handler(_completion: Completion) -> Response<Vec<String>> {
+#     Response::Candidates(vec![])
 # }
 ```
+
+See documentations on [`Completion`] and [`Response`] for more details.
 
 ### Shell Part
 
