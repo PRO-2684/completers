@@ -144,7 +144,6 @@ impl Completion {
     ///
     /// If the program name cannot be determined or is not a valid identifier in Bash, return [`ShellCodeError::Encoding`]. If IO error occurs, return [`ShellCodeError::IO`].
     pub fn generate() -> Result<(), ShellCodeError> {
-        const ALLOWED_SPECIAL_CHARS: &str = "_-";
         // We want to keep symbolic links, so we don't use `canonicalize`
         let path = env::args().nth(0).map_or_else(env::current_exe, absolute)?;
         let name = path
@@ -154,7 +153,7 @@ impl Completion {
         // Error if the name is not a valid identifier for bash
         let valid = name
             .chars()
-            .all(|c| c.is_alphanumeric() || ALLOWED_SPECIAL_CHARS.contains(c));
+            .all(|c| c.is_alphanumeric() || "_-".contains(c));
         if !valid {
             return Err(ShellCodeError::Encoding(
                 "Program name is not a valid identifier in Bash".to_string(),
@@ -164,6 +163,11 @@ impl Completion {
         let path = path
             .to_str()
             .ok_or_else(|| ShellCodeError::Encoding("Failed to decode program path".to_string()))?;
+        if path.chars().any(|c| c.is_whitespace()) {
+            return Err(ShellCodeError::Encoding(
+                "Program path contains whitespace".to_string(),
+            ));
+        }
         println!(r"_completer_{name}() {{");
         println!(r"  local IFS=$'\n'");
         println!(
