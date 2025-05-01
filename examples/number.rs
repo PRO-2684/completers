@@ -15,16 +15,7 @@ fn main() {
 fn handler(completion: Completion) -> Vec<String> {
     // Demo words for completion. Should contain some words with common prefixes for demo purposes.
     const MAPPING: [&str; 10] = [
-        "zero",
-        "one",
-        "two",
-        "three",
-        "four",
-        "five",
-        "six",
-        "seven",
-        "eight",
-        "nine",
+        "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
     ];
     let Some(query) = completion.words.get(completion.word_index) else {
         return vec![];

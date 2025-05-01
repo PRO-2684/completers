@@ -6,7 +6,7 @@ mod errors;
 mod types;
 
 use errors::{CompletersError, ShellCodeError};
-use std::{env, path::absolute, process::exit};
+use std::{env, fmt::Display, path::absolute, process::exit};
 use types::CompletionType;
 
 /// Helper function for handling completion requests.
@@ -17,7 +17,8 @@ use types::CompletionType;
 pub fn handle_completion<F, I>(handler: F)
 where
     F: FnOnce(Completion) -> I,
-    I: IntoIterator<Item = String>,
+    I: IntoIterator,
+    I::Item: Display,
 {
     match Completion::init() {
         Ok(Some(completion)) => {
@@ -129,7 +130,8 @@ impl Completion {
     /// Process the completion request and exit successfully.
     pub fn complete<I>(candidates: I)
     where
-        I: IntoIterator<Item = String>,
+        I: IntoIterator,
+        I::Item: Display,
     {
         // Print the candidates to stdout, separated by newlines
         for candidate in candidates {
@@ -166,7 +168,11 @@ impl Completion {
         }
 
         // Generate the completion code
-        Ok(format!(include_str!("../templates/bash.tmpl"), name = name, path = path))
+        Ok(format!(
+            include_str!("./templates/bash.tmpl"),
+            name = name,
+            path = path
+        ))
     }
 }
 
