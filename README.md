@@ -8,6 +8,9 @@
 [![Crates.io Total Downloads](https://img.shields.io/crates/d/completers?logo=rust)](https://crates.io/crates/completers)
 [![docs.rs](https://img.shields.io/docsrs/completers?logo=rust)](https://docs.rs/completers)
 
+> [!WARNING]
+> This crate is still a prototype, and is subject to BREAKING changes without notice.
+
 A tiny Rust-native shell completion solution.
 
 <!-- ## 📥 Installation
@@ -92,3 +95,7 @@ See [`MECHANISM.md`](doc/MECHANISM.md) for a detailed explanation of how this wo
 ## ✅ TODO
 
 - [ ] Escape special characters in generated shell code & completion candidates
+- [ ] Completion delegation
+    - Need to consider how to design the API
+    - Prototypes available in [`prototype`](./prototype)
+- [ ] Extensibility (API?)
