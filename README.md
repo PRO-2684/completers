@@ -10,21 +10,7 @@
 
 A tiny Rust-native shell completion solution.
 
-## ⚙️ Automatic Releases Setup
-
-1. [Create a new GitHub repository](https://github.com/new) with the name `completers` and push this generated project to it.
-2. Enable Actions for the repository, and grant "Read and write permissions" to the workflow [here](https://github.com/PRO-2684/completers/settings/actions).
-3. [Generate an API token on crates.io](https://crates.io/settings/tokens/new), with the following setup:
-
-    - `Name`: `completers`
-    - `Expiration`: `No expiration`
-    - `Scopes`: `publish-new`, `publish-update`
-    - `Crates`: `completers`
-
-4. [Add a repository secret](https://github.com/PRO-2684/completers/settings/secrets/actions) named `CARGO_TOKEN` with the generated token as its value.
-5. Consider removing this section and updating this README with your own project information.
-
-## 📥 Installation
+<!-- ## 📥 Installation
 
 ### Using [`binstall`](https://github.com/cargo-bins/cargo-binstall)
 
@@ -40,11 +26,11 @@ Navigate to the [Releases page](https://github.com/PRO-2684/completers/releases)
 
 ```bash
 cargo install completers
-```
+``` -->
 
 ## 💡 Examples
 
-TODO
+See [`examples`](./examples/README.md) for a few examples of how to use this crate.
 
 ## 📖 Usage
 
