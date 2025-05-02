@@ -140,6 +140,13 @@ impl Completion {
                     println!("{candidate}");
                 }
             },
+            Response::Delegate(args) => {
+                println!("DELEGATE");
+                // Print the arguments to stdout, separated by newlines
+                for arg in args {
+                    println!("{arg}");
+                }
+            },
         }
         exit(0);
     }
@@ -196,6 +203,28 @@ where
     /// - Should NOT contain `\n`, otherwise it'll be treated as multiple candidates.
     /// - Should NOT contain whitespaces, otherwise when it's completed, it'll be treated as multiple arguments.
     Candidates(I),
+    /// Delegate to another command for completion.
+    ///
+    /// ## Example
+    ///
+    /// When the user types:
+    ///
+    /// ```bash
+    /// my_binary sub_command a<TAB>
+    /// ```
+    ///
+    /// And you answer with:
+    ///
+    /// ```rust
+    /// Response::Delegate(vec!["other_command", "--some-flag"]);
+    /// ```
+    ///
+    /// Then the resulting completion will be equivalent to:
+    ///
+    /// ```bash
+    /// other_command --some-flag a<TAB>
+    /// ```
+    Delegate(I),
 }
 
 /// Checks if the string is safe in Bash.
