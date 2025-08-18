@@ -5,9 +5,9 @@
 mod errors;
 mod types;
 
-use errors::{CompletersError, ShellCodeError};
+pub use errors::{CompletersError, ShellCodeError};
 use std::{env, fmt::Display, path::absolute, process::exit};
-use types::CompletionType;
+pub use types::CompletionType;
 
 /// Helper function for handling completion requests.
 ///
@@ -35,7 +35,7 @@ where
     }
 }
 
-/// A completion request from the shell. [ref](https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html).
+/// A completion request. [ref](https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html).
 pub struct Completion {
     /// An array of all the words in the command line, including the command itself. Corresponds to `COMP_WORDS`.
     pub words: Vec<String>,
@@ -71,7 +71,6 @@ impl Completion {
             "1" => Ok(Some(Self::from_args(env::args().skip(1).collect())?)),
             "bash" => {
                 println!("{}", Self::generate_bash()?);
-
                 exit(0);
             }
             _ => Err(CompletersError::UnrecognizedEnvVar(complete)),
@@ -79,7 +78,7 @@ impl Completion {
     }
 
     /// Constructs a [`Completion`] object from the arguments, without the first argument (the program name).
-    fn from_args(mut args: Vec<String>) -> Result<Self, CompletersError> {
+    pub fn from_args(mut args: Vec<String>) -> Result<Self, CompletersError> {
         use CompletersError::InvalidValue;
         if args.len() < 5 {
             return Err(CompletersError::MissingField);
@@ -133,9 +132,34 @@ impl Completion {
         I: IntoIterator,
         I::Item: Display,
     {
+        println!("COMPLETERS_COMPLETE");
         // Print the candidates to stdout, separated by newlines
         for candidate in candidates {
             println!("{candidate}");
+        }
+        exit(0);
+    }
+
+    /// Delegate to the completion request and exit successfully.
+    pub fn delegate(self) {
+        println!("COMPLETERS_DELEGATE");
+        let Self {
+            word_index,
+            line,
+            cursor_index,
+            completion_type,
+            key,
+            words,
+        } = self;
+        // Print arguments
+        println!("{word_index}");
+        println!("{line}");
+        println!("{cursor_index}");
+        println!("{completion_type}");
+        println!("{key}");
+        // Print the words to stdout, separated by newlines
+        for word in words {
+            println!("{word}");
         }
         exit(0);
     }

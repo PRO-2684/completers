@@ -30,7 +30,7 @@ _delegated_2() {
     # Delegate completion, from https://github.com/cykerway/complete-alias/blob/7f2555c2fe7a1f248ed2d4301e46c8eebcbbc4e2/complete_alias#L834-L840
     _command_offset 0
 
-    # Log the updated environment
+    # Log the final environment
     echo "== Final ==" >> log.txt
     _delegated_2_log
 }

@@ -24,3 +24,5 @@ Here's a list of examples you can try out:
     - Returns candidate words that start with the query, or the English word if the query is a number.
     - Example 1: `z` -> `zero`, `f` -> `four`/`five` etc.
     - Example 2: `0` -> `zero`, `1` -> `one`, `2` -> `two`, etc.
+- [`delegate`](./delegate.rs): Completion delegation.
+    - Delegates `./target/debug/examples/delegate` to `cargo build --example`

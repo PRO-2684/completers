@@ -1,5 +1,24 @@
-_completer_{name}() {{
+_completers_{name}() {{
     local IFS=$'\n'
-    COMPREPLY=($(COMPLETE=1 {path} "$COMP_CWORD" "$COMP_LINE" "$COMP_POINT" "$COMP_TYPE" "$COMP_KEY" "${{COMP_WORDS[@]}}"))
+    OUTPUT=($(COMPLETE=1 {path} "$COMP_CWORD" "$COMP_LINE" "$COMP_POINT" "$COMP_TYPE" "$COMP_KEY" "${{COMP_WORDS[@]}}"))
+    TYPE=${{OUTPUT[0]}}
+    case "$TYPE" in
+        "COMPLETERS_COMPLETE")
+            COMPREPLY=("${{OUTPUT[@]:1}}") ;;
+        "COMPLETERS_DELEGATE")
+            COMP_CWORD=${{OUTPUT[1]}}
+            COMP_LINE=${{OUTPUT[2]}}
+            COMP_POINT=${{OUTPUT[3]}}
+            COMP_TYPE=${{OUTPUT[4]}}
+            COMP_KEY=${{OUTPUT[5]}}
+            COMP_WORDS=("${{OUTPUT[@]:6}}")
+
+            # Delegate completion, from https://github.com/cykerway/complete-alias/blob/7f2555c2fe7a1f248ed2d4301e46c8eebcbbc4e2/complete_alias#L834-L840
+            _command_offset 0
+            ;;
+        *)
+            COMPREPLY=() ;;
+    esac
 }}
-complete -F _completer_{name} {name}
+
+complete -F _completers_{name} {name}

@@ -1,5 +1,7 @@
 //! Possible types of completions.
 
+use std::fmt::Display;
+
 /// The type of completion attempted. [ref](https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html#index-COMP_005fTYPE).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -16,15 +18,15 @@ pub enum CompletionType {
     Menu = b'%',
 }
 
-impl From<CompletionType> for u8 {
-    fn from(completion_type: CompletionType) -> Self {
-        completion_type as Self
+impl From<&CompletionType> for u8 {
+    fn from(completion_type: &CompletionType) -> Self {
+        *completion_type as Self
     }
 }
 
-impl From<CompletionType> for char {
-    fn from(completion_type: CompletionType) -> Self {
-        completion_type as u8 as Self
+impl From<&CompletionType> for char {
+    fn from(completion_type: &CompletionType) -> Self {
+        *completion_type as u8 as Self
     }
 }
 
@@ -55,5 +57,12 @@ impl TryFrom<char> for CompletionType {
             b'%' => Ok(Self::Menu),
             _ => Err(()),
         }
+    }
+}
+
+impl Display for CompletionType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let c: char = self.into();
+        write!(f, "{c}")
     }
 }
