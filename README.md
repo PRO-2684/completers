@@ -79,6 +79,8 @@ mkdir -p ~/.local/share/bash-completion/completions # Create the directory if it
 echo 'source <(COMPLETE=bash my_binary)' > ~/.local/share/bash-completion/completions/my_binary
 ```
 
+You can also use `/usr/share/bash-completion/completions/` as the directory, if you want the completion to be available system-wise.
+
 ### The `completers` Binary
 
 Currently, the `completers` binary does nothing.
