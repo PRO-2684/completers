@@ -36,6 +36,7 @@ where
 }
 
 /// A completion request. [ref](https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html).
+#[derive(Debug, Clone)]
 pub struct Completion {
     /// An array of all the words in the command line, including the command itself. Corresponds to `COMP_WORDS`.
     pub words: Vec<String>,
