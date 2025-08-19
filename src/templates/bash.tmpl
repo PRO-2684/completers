@@ -1,6 +1,7 @@
 _completers_{name}() {{
     local IFS=$'\n'
     OUTPUT=($(COMPLETE=1 {path} "$COMP_CWORD" "$COMP_LINE" "$COMP_POINT" "$COMP_TYPE" "$COMP_KEY" "${{COMP_WORDS[@]}}"))
+    unset -v IFS
     TYPE=${{OUTPUT[0]}}
     case "$TYPE" in
         "COMPLETERS_COMPLETE")
