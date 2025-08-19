@@ -21,4 +21,4 @@ _completers_{name}() {{
     esac
 }}
 
-complete -F _completers_{name} {name}
+complete -o bashdefault -o nosort -o nospace -F _completers_{name} {name}
