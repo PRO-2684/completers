@@ -25,7 +25,6 @@ fn main() -> Result<(), CompletersError> {
 
 /// Delegates completion to `cargo build --example`, exit if successful.
 fn delegate_to_cargo(mut comp: Completion) -> Result<(), CompletersError> {
-    // dbg!(&comp);
     let old_words_count = comp.words.len();
     comp.words.remove(0); // Discard program name
     let mut new_words = vec![
@@ -48,9 +47,8 @@ fn delegate_to_cargo(mut comp: Completion) -> Result<(), CompletersError> {
         + comp.word_index
         + comp.words[comp.word_index].len();
     // TODO: Resolve cursor index correctly, instead of assuming it at the end of current word
-    // FIXME: Does not behave correctly if not completing at the end
+    // FIXME: Proper escaping when composing `comp.line` (Although rarely does anyone use it)
 
-    // dbg!(&comp);
     comp.delegate();
     Ok(())
 }

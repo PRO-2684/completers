@@ -15,9 +15,10 @@ fn main() {
 fn handler(completion: Completion) -> Vec<String> {
     // Demo words for completion. Should contain some words with common prefixes for demo purposes.
     const WORDLIST: [&str; 7] = [
+        // To test that the order is preserved, I've moved `banana` to the front.
+        "banana",
         "apple",
         "apricot",
-        "banana",
         "blueberry",
         "grape",
         "orange",

@@ -66,6 +66,9 @@ fn main() {
 
 ### Shell Part
 
+> [!NOTE]
+> By using `completers`, we assume that you've got [`bash-completion`](https://github.com/scop/bash-completion) installed. Some features such as completion delegate won't work without it.
+
 Generate and evaluate the shell code via:
 
 ```bash
