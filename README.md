@@ -13,24 +13,6 @@
 
 A tiny Rust-native shell completion solution.
 
-<!-- ## 📥 Installation
-
-### Using [`binstall`](https://github.com/cargo-bins/cargo-binstall)
-
-```bash
-cargo binstall completers
-```
-
-### Downloading from Releases
-
-Navigate to the [Releases page](https://github.com/PRO-2684/completers/releases) and download respective binary for your platform. Make sure to give it execute permissions.
-
-### Compiling from Source
-
-```bash
-cargo install completers
-``` -->
-
 ## 💡 Examples
 
 See [`examples`](./examples/README.md) for a few examples of how to use this crate.
@@ -38,6 +20,8 @@ See [`examples`](./examples/README.md) for a few examples of how to use this cra
 ## 📖 Usage
 
 ### Rust Part
+
+#### Candidates
 
 First, define a completion handler function that takes a [`Completion`] struct as an argument and returns a vector of completion candidates:
 
@@ -62,6 +46,71 @@ fn main() {
 # fn handler(_completion: Completion) -> Vec<String> {
 #     vec![]
 # }
+```
+
+#### Delegate
+
+To delegate completion, we should first match against [`Completion::init()`]:
+
+```rust
+use completers::{CompletersError, Completion};
+use std::process::exit;
+
+fn main() -> Result<(), CompletersError> {
+    match Completion::init() {
+        Ok(Some(completion)) => {
+            delegate_completion(completion)?;
+        }
+        Ok(None) => {
+            // No completion request, do nothing
+        }
+        Err(e) => {
+            eprintln!("Error: {e}");
+            exit(1);
+        }
+    };
+    // Do your job
+    Ok(())
+}
+#
+# fn delegate_completion(mut comp: Completion) -> Result<(), CompletersError> {
+#     Ok(())
+# }
+```
+
+Then, construct or mutate the [`Completion`] object in the delegate function. We'll delegate to `cargo build --example` for example:
+
+```rust
+# use completers::{CompletersError, Completion};
+# use std::process::exit;
+#
+/// Delegates completion to `cargo build --example`, exit if successful.
+fn delegate_completion(mut comp: Completion) -> Result<(), CompletersError> {
+    let old_words_count = comp.words.len();
+    comp.words.remove(0); // Discard program name
+    let mut new_words = vec![
+        "cargo".to_string(),
+        "build".to_string(),
+        "--example".to_string(),
+    ];
+    new_words.append(&mut comp.words);
+    comp.words = new_words;
+    comp.word_index += comp.words.len();
+    comp.word_index -= old_words_count;
+
+    comp.line = comp.words.join(" ");
+    comp.cursor_index = comp
+        .words
+        .iter()
+        .take(comp.word_index)
+        .map(|word| word.len())
+        .sum::<usize>()
+        + comp.word_index
+        + comp.words[comp.word_index].len();
+
+    comp.delegate();
+    Ok(())
+}
 ```
 
 ### Shell Part

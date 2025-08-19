@@ -9,7 +9,7 @@ pub use errors::{CompletersError, ShellCodeError};
 use std::{env, fmt::Display, path::absolute, process::exit};
 pub use types::CompletionType;
 
-/// Helper function for handling completion requests.
+/// Helper function for handling completion requests with candidates. To delegate, you'll have to `match` [`Completion::init()`] for yourself.
 ///
 /// ## Panics
 ///
