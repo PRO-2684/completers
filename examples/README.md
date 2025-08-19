@@ -26,3 +26,4 @@ Here's a list of examples you can try out:
     - Example 2: `0` -> `zero`, `1` -> `one`, `2` -> `two`, etc.
 - [`delegate`](./delegate.rs): Completion delegation.
     - Delegates `./target/debug/examples/delegate` to `cargo build --example`
+    - You'll need to [setup `cargo`'s completion](https://rust-lang.github.io/rustup/installation/index.html?highlight=Comple#enable-tab-completion-for-bash-fish-zsh-or-powershell) first, if not already

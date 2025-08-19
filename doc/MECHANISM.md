@@ -49,8 +49,69 @@ Note that the candidates are determined by `my_binary` itself, not by a separate
 
 ## Completion Delegation
 
-TBD
+Sometimes, we just want to *delegate* the completion request to another command. One of the well-known examples is `sudo`:
+
+```bash
+sudo apt upd<TAB>
+```
+
+To complete the command, the completion provider of `apt` must be invoked as if we've typed:
+
+```bash
+apt upd<TAB>
+```
+
+Which provides a single completion candidate `update`. Thus we get:
+
+```bash
+sudo apt update
+```
+
+Under the hood, it uses a function named `_command_offset` to "delegate" to the provided completion request[^1]. So, just like we've [sent relevant variables to our binary via commandline arguments](#integration-with-rust), we will now print the delegated completion request in the very same order:
+
+```rust
+// Construct the delegated completion request
+...
+// Print arguments
+println!("{COMP_CWORD}");
+println!("{COMP_LINE}");
+println!("{COMP_POINT}");
+println!("{COMP_TYPE}");
+println!("{COMP_KEY}");
+// Print the words to stdout, separated by newlines
+for word in COMP_WORDS {
+    println!("{word}");
+}
+```
+
+Then collect and spread them back to their place in our completion function:
+
+```bash
+OUTPUT=($(COMPLETE=1 my_binary "$COMP_CWORD" "$COMP_LINE" "$COMP_POINT" "$COMP_TYPE" "$COMP_KEY" "${COMP_WORDS[@]}"))
+COMP_CWORD=${OUTPUT[0]}
+COMP_LINE=${OUTPUT[1]}
+COMP_POINT=${OUTPUT[2]}
+COMP_TYPE=${OUTPUT[3]}
+COMP_KEY=${OUTPUT[4]}
+COMP_WORDS=("${OUTPUT[@]:5}")
+```
+
+Finally, call `_command_offset` to delegate the request[^2]:
+
+```bash
+_command_offset 0
+```
 
 ## Putting It All Together
 
-TBD
+So now we've got two choices regarding our completion result:
+
+1. We provide candidates directly
+2. We want to *delegate* to another completion request
+
+How do we differentiate it? Simply adding one more line in the output will do. When we provide candidates directly, we can print the magic word `COMPLETERS_COMPLETE` as the first line of output; otherwise, if we want to delegate, we print `COMPLETERS_DELEGATE`. Then, a simple switch-case in our completion function will do. Refer to [`bash.tmpl`](/src/templates/bash.tmpl) and [`lib.rs`](/src/lib.rs) for the full implementation.
+
+---
+
+[^1]: Newer versions of `bash-completion` [uses `_comp_command_offset` instead](https://github.com/scop/bash-completion/blob/c55ee7f6fb75300786cb522261f68eb80366c41f/completions/sudo#L17), but has provided [compatible implementation of `_command_offset`](https://github.com/scop/bash-completion/blob/c55ee7f6fb75300786cb522261f68eb80366c41f/bash_completion.d/000_bash_completion_compat.bash#L281-L292) on top of it.
+[^2]: "The documentation does not say it will work with argument `0`, but looking at its code (version 2.11) it should." ([ref](https://github.com/cykerway/complete-alias/blob/7f2555c2fe7a1f248ed2d4301e46c8eebcbbc4e2/complete_alias#L834-L840))
