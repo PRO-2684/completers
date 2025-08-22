@@ -115,6 +115,8 @@ fn delegate_completion(mut comp: Completion) -> Result<(), CompletersError> {
 
 ### Shell Part
 
+#### Bash
+
 > [!NOTE]
 > By using `completers`, we assume that you've got [`bash-completion`](https://github.com/scop/bash-completion) installed. Some features such as completion delegate won't work without it.
 
@@ -133,6 +135,22 @@ echo 'source <(COMPLETE=bash my_binary)' > ~/.local/share/bash-completion/comple
 
 You can also use `/usr/share/bash-completion/completions/` as the directory, if you want the completion to be available system-wise.
 
+#### Nushell
+
+Instructions for lazy loading completions will be updated once nushell/nushell#4874 is resolved. For now, you'll have to:
+
+```nu
+COMPLETE=nu my_binary o> somewhere/handy.nu
+```
+
+And then `source` the file from your `($nu.default-config-dir)/config.nu`:
+
+```nu
+source somewhere/handy.nu
+```
+
+Note that completions will only work for `my_binary`, and not `./my_binary` or `/path/to/my_binary`.
+
 ### The `completers` Binary
 
 Currently, the `completers` binary does nothing.
@@ -149,7 +167,7 @@ See [`MECHANISM.md`](doc/MECHANISM.md) for a detailed explanation of how this wo
 ## ✅ TODO
 
 - [ ] Escape special characters in generated shell code & completion candidates
-- [ ] Completion delegation
+- [x] Completion delegation
     - Need to consider how to design the API
     - Prototypes available in [`prototype`](./prototype)
 - [ ] Extensibility (API?)
