@@ -1,0 +1,25 @@
+module "{name} extern" {{
+    def _completers_{name} [context:string, position:int] {{
+        let words = $context | split words
+        let cword = ($words | length) - 1
+        let rows = COMPLETE=1 {path} $cword $context $position 9 9 ...$words | lines
+        let completions = match $rows.0 {{
+            "COMPLETERS_COMPLETE" => ($rows | slice 1..)
+            "COMPLETERS_DELEGATE" => [] # TODO
+            _ => []
+        }}
+        {{
+            options: {{
+                case_sensitive: false,
+                completion_algorithm: substring,
+                sort: false,
+            }},
+            completions: $completions
+        }}
+    }}
+
+    export extern {name} [
+        ...args: string@_completers_{name}
+    ]
+}}
+use "{name} extern" {name}

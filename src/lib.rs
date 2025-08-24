@@ -74,6 +74,10 @@ impl Completion {
                 println!("{}", Self::generate_bash()?);
                 exit(0);
             }
+            "nu" | "nushell" => {
+                println!("{}", Self::generate_nu()?);
+                exit(0);
+            }
             _ => Err(CompletersError::UnrecognizedEnvVar(complete)),
         }
     }
@@ -165,12 +169,8 @@ impl Completion {
         exit(0);
     }
 
-    /// Generate Bash completion code.
-    ///
-    /// ## Errors
-    ///
-    /// If the program name cannot be determined or is not a valid identifier in Bash, return [`ShellCodeError::Encoding`]. If IO error occurs, return [`ShellCodeError::IO`].
-    pub fn generate_bash() -> Result<String, ShellCodeError> {
+    /// Gets executable name & path.
+    fn get_name_path() -> Result<(String, String), ShellCodeError> {
         // We want to keep symbolic links, so we don't use `canonicalize`
         let path = env::args().nth(0).map_or_else(env::current_exe, absolute)?;
         let name = path
@@ -192,9 +192,30 @@ impl Completion {
             ));
         }
 
-        // Generate the completion code
+        Ok((name.to_string(), path.to_string()))
+    }
+
+    /// Generate Bash completion code.
+    ///
+    /// ## Errors
+    ///
+    /// If the program name cannot be determined or is not a valid identifier in Bash, return [`ShellCodeError::Encoding`]. If IO error occurs, return [`ShellCodeError::IO`].
+    pub fn generate_bash() -> Result<String, ShellCodeError> {
+        let (name, path) = Self::get_name_path()?;
+
         Ok(format!(
             include_str!("./templates/bash.tmpl"),
+            name = name,
+            path = path
+        ))
+    }
+
+    /// Generate Nushell completion code.
+    pub fn generate_nu() -> Result<String, ShellCodeError> {
+        let (name, path) = Self::get_name_path()?;
+
+        Ok(format!(
+            include_str!("./templates/nu.tmpl"),
             name = name,
             path = path
         ))
