@@ -155,9 +155,9 @@ Note that completions will only work for `my_binary`, and not `./my_binary` or `
 
 Currently, the `completers` binary does nothing.
 
-## ⚙️ Mechanism
+## ⚙️ Details
 
-See [`MECHANISM.md`](doc/MECHANISM.md) for a detailed explanation of how this works, in case you're curious.
+See [`CAVEATS.md`] for a list of known problems, and see [`MECHANISM.md`](doc/MECHANISM.md) for a detailed explanation of how this works, in case you're curious.
 
 ## 🎉 Credits
 
