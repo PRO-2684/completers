@@ -6,7 +6,7 @@ mod errors;
 mod types;
 
 pub use errors::{CompletersError, ShellCodeError};
-use std::{env, fmt::Display, path::absolute, process::exit};
+use std::{env, fmt::Display, process::exit};
 pub use types::CompletionType;
 
 /// Helper function for handling completion requests with candidates. To delegate, you'll have to `match` [`Completion::init()`] for yourself.
@@ -83,6 +83,10 @@ impl Completion {
     }
 
     /// Constructs a [`Completion`] object from the arguments, without the first argument (the program name).
+    ///
+    /// ## Errors
+    ///
+    /// Errors if provided args could not be parsed successfully.
     pub fn from_args(mut args: Vec<String>) -> Result<Self, CompletersError> {
         use CompletersError::InvalidValue;
         if args.len() < 5 {
@@ -216,6 +220,10 @@ impl Completion {
     }
 
     /// Generate Nushell completion code.
+    ///
+    /// ## Errors
+    ///
+    /// Errors if failed to resolve name and path of current executable.
     pub fn generate_nu() -> Result<String, ShellCodeError> {
         let (name, path) = Self::get_name_path()?;
 
