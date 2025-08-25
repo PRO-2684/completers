@@ -172,7 +172,7 @@ impl Completion {
     /// Gets executable name & path.
     fn get_name_path() -> Result<(String, String), ShellCodeError> {
         // We want to keep symbolic links, so we don't use `canonicalize`
-        let path = env::args().nth(0).map_or_else(env::current_exe, absolute)?;
+        let path = env::current_exe()?;
         let name = path
             .file_name()
             .and_then(|name| name.to_str())
