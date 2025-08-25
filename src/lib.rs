@@ -57,7 +57,7 @@ impl Completion {
     ///
     /// - Is not set, or set to `0` or empty, return `None`.
     /// - Is set to `1`, return a [`Completion`] object.
-    /// - Is set to `bash`, generate shell code and exit successfully.
+    /// - Is set to `bash`/`nu`/`nushell`, generate shell code and exit successfully.
     ///
     /// ## Errors
     ///
@@ -167,6 +167,11 @@ impl Completion {
             println!("{word}");
         }
         exit(0);
+    }
+
+    /// Answer the completion request with no candidates.
+    pub fn empty() {
+        Self::complete::<[&str; 0]>([]);
     }
 
     /// Gets executable name & path.
