@@ -161,7 +161,7 @@ See [`CAVEATS.md`](doc/CAVEATS.md) for a list of known problems, and see [`MECHA
 
 ## 🎉 Credits
 
-- [`clap`](https://github.com/clap-rs/clap), whose code and API is used as a reference. When `clap`'s [Rust-Native Completion Engine](https://github.com/clap-rs/clap/issues/3166) is stablized, this crate will be deprecated in favor of it.
+- [`clap`](https://github.com/clap-rs/clap), whose code and API is used as a reference. When `clap`'s [Rust-Native Completion Engine](https://github.com/clap-rs/clap/issues/3166) is stabilized, this crate will be deprecated in favor of it.
 - [`complete-alias`](https://github.com/cykerway/complete-alias), whose shell code helped a lot.
 
 ## ✅ TODO
